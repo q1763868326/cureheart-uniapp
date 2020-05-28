@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "animate.css": "^4.1.0",
+    "js-md5": "^0.7.3"
+  }
+}
