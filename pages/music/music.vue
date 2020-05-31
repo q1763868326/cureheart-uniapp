@@ -1,6 +1,37 @@
 <template>
 	<view>
+		
+		<uni-transition :modeClass="['fade','slide-right']" :duration="400" :style="{'width':'100%','position':'fixed'}" :show="!searching">
+		<view class="searchbar">
+			<text class="bartitle">Music</text>
+			<text class="cuIcon-search searchbt" @click="searching=true"></text>
+		</view>		
+		</uni-transition>
+		<uni-transition :modeClass="['fade','slide-right']" :duration="400" :style="{'width':'100%'}" :show="searching">
+			<view class="searchbar">
+				<text class="cuIcon-search searchbt-ing"></text>
+				<input v-model="searchvalue" class="searchcontent" placeholder="请输入你要搜索的歌曲名/歌手" placeholder-style="color:rgba(0,0,0,0.4)" @confirm="searchmusic" />
+				<button class="cu-btn cancle" @tap="searching=false">取消</button>
+			</view>		
+		</uni-transition>
+		<view class="searchlist" v-if="searched">
+			<view style="position: absolute;top: 24rpx;left: 20rpx;width: 100%;height: 58rpx;font-size: 48rpx;line-height: 58rpx;">
+				<text >搜索结果</text>
+			</view>
+			
+			<view style="overflow-y: scroll;width: 100%;position: relative;top: 90rpx;height: 974rpx;">
+				<view v-for="(item,index) in searchdata" style="margin-top: 20rpx; display: flex; align-items: center;" :key="index">
+					<image style="flex: 1;width: 108rpx;height:108rpx;border-radius: 120rpx;" :src="item['imgsrc']"></image>
+					<view style="flex: 5;flex-direction: column; padding-left: 20rpx;" @tap="playmusic(item,true)">
+						<text style="display: block; font-size: 44rpx;">{{item["musicname"]}}</text>
+						<text style="font-size: 28rpx; padding-left: 15rpx;opacity: 0.8;">{{item["singername"]}}</text>
+					</view>
+					<text class="cuIcon-down" style="flex: 1;font-size: 50rpx;opacity: 0.8;" @tap="getdownload(item)"></text>
 					
+					
+				</view>
+			</view>
+		</view>
 		<view class="player" v-show="true">
 			<image :class="isplaying?'music_img':'music_img_noanimation'" :src="src"></image>
 			<text class="name_music">{{currentmusic}}</text>
@@ -8,24 +39,48 @@
 			<text class="cuIcon-list listbt" @tap="display"></text>
 		</view>
 		
-		<view class="mask" @tap="closelist"></view>
-		 <uni-transition :modeClass="['fade','slide-bottom']" :duration="700" :show="displaylist" :styles="playlist">
-			<!-- <uni-transition :modeClass="['fade','slide-bottom']" duration="700" :show="!displaylist" :styles="{'width':'100%','height':'100vh'}" @tap="display"> -->
-			
-			<!-- <view class="playlist" v-if="displaylist"> -->
+		
+		<view class="mask" @tap="closelist" v-if="displaylist"></view>		
+		 <uni-transition :modeClass="['fade','slide-bottom']" :duration="700"  :styles="playlist" :show="displaylist">
+
 				<view class="title">
 					<text>播放列表</text>
 				</view>
 				<view  class="scrolllist" >
-					<view class="musicitem" v-for="(item,index) in musiclist" :key="index" @tap="playmusic(item)">
+					<view class="musicitem" v-for="(item,index) in musiclist" :key="index" @tap="playmusic(item,false)" >
 						<text class="cuIcon-sound" style="color:#e40c0c; font-size: 34rpx; margin-left: 10rpx;margin-right: 10rpx;"></text>
 						<text class="item_name">{{item["musicname"]}}</text>
 						<text class="cuIcon-close delete"></text>
 					</view>
 				</view>
-			<!-- </view> -->
-			</uni-transition>		
-		<!-- </uni-transition>		 -->		
+
+			</uni-transition>	
+		
+		<uni-transition :modeClass="['fade','slide-right']" :duration="700" :styles="{'width':'100%'}" :show="isdownload">
+			<view style="position: fixed; top: 250rpx;border-radius: 50rpx; width: 604rpx; height: 660rpx; left: 74rpx; background-color:#000000 ;">
+				<view style="display: flex;width: 100%; height: 80rpx; padding-left: 30rpx;">
+					<text style="flex:15; font-size: 38rpx; color: #FFFFFF;line-height: 80rpx;">下载列表</text>
+					<text @tap="isdownload=false" class="cuIcon-close" style="flex: 1;color: #FFFFFF;line-height: 80rpx; font-size: 38rpx;margin-right: 30rpx;margin-top:1rpx;"></text>
+				</view>
+				<view  v-for="(item,index) in downloadlist" :key="index" style="display: flex; height: 110rpx; width: 542rpx;margin-left: 32rpx;background-color:#e52424 ; border-radius: 12px;margin-top: 22rpx;">
+					<view style="flex: 5;display: flex;flex-direction: column;">
+						<text style="width:100%; font-size: 38rpx;color: #FFFFFF;opacity: 0.9; margin-top: 5rpx; margin-left: 10rpx;" >{{currentdownload}}</text>
+						<text style="width:100%; font-size: 22rpx;color: #FFFFFF;opacity: 1; margin-top: 10rpx; margin-left: 20rpx;" >{{item["type"]}}</text>
+					</view>
+					
+					<button @tap="startdownload(item['downloadurl'])" style="flex:1;width: 142rpx;height: 72rpx;margin-top: 16rpx;border-radius: 20rpx;margin-right: 24rpx;line-height: 76rpx;font-size: 26rpx;">下载</button>
+				</view>
+			</view>
+		</uni-transition>
+		
+		<view style="position: fixed; height: 100vh; width: 100%; display: flex;justify-content: center; align-items: center;" v-if="isloading" >
+		
+			<view class="inloading">
+				<text class="cuIcon-loading2" style=" font-size:70rpx; font-weight: bold; line-height: 70rpx; text-align: center;"></text>
+			</view>
+				<text style="position: fixed;top: 48vh; font-size:40rpx; font-weight: bold; line-height: 70rpx;">正在加载</text>
+		</view>
+		
 	</view>
 </template>
 
@@ -35,6 +90,14 @@
 		components:{uniTransition},
 		data() {
 			return {
+				currentdownload:"",
+				isloading:false,
+				isdownload:false,
+				downloadlist:[],
+				searched:false,
+				searchdata:[],
+				searchvalue:"",
+				searching:false,
 				timer:null,
 				animation:null,
 				animationData: {},
@@ -47,9 +110,9 @@
 				playlist:{
 					'overflow': 'hidden',
 					'position': 'absolute',
-					'top':'650rpx',
+					'bottom':'0',
 					'width': '100%',
-					'height': '685rpx',
+					'height': '50vh',
 					'background-color': 'white',
 					'border-radius': '36rpx',
 					'border': '6rpx solid #222'
@@ -57,13 +120,23 @@
 			}
 		},
 		onLoad() {
-			uni.request({
-				url:"http://116.62.47.156/getmusiclist/",
-				method:"GET",
+			// uni.clearStorage()
+			uni.getStorage({
+				key:"musiclist",
 				success: (res) => {
-					this.musiclist=res.data['data']
+					this.musiclist=res.data
+				},
+				fail: () => {
+					uni.request({
+						url:"http://116.62.47.156/getmusiclist/",
+						method:"GET",
+						success: (res) => {
+							this.musiclist=res.data['data']
+						}
+					})
 				}
 			})
+			
 			this.innerAudioContext = uni.createInnerAudioContext();
 			this.innerAudioContext.autoplay = false;
 			this.innerAudioContext.src = this.currentmusic;
@@ -75,15 +148,66 @@
 				that.currentmusic = item["musicname"]
 				that.innerAudioContext.play()
 			})
+			
 		},
 		methods: {
-			playmusic(item){
+			startdownload(url){
+				console.log(url)
+				window.location=url
+			},
+			getdownload(item){
+				this.isloading=true
+				uni.request({
+					url: 'http://116.62.47.156/getdownload/',
+					method: 'POST',
+					data: {
+						"songmid":item["songmid"],
+						"strMediaMid":item["strMediaMid"],
+						"type":item["type"]
+					},
+					success: res => {
+	
+						this.currentdownload = item["musicname"]
+						this.downloadlist = res.data["data"]
+						this.isdownload=true
+						this.isloading=false
+					},
+					fail: () => {},
+					complete: () => {}
+				});
+			},
+			searchmusic(){
+				if(this.searchvalue==""){
+					return
+				}
+				this.isloading=true
+				uni.request({
+					url:"http://116.62.47.156/searchmusic?searchvalue="+this.searchvalue,
+					success: (res) => {
+						this.searchdata = res.data["data"]
+						this.searched=true
+						this.searchvalue=""
+						this.isloading=false
+					}
+				})
+			},
+			playmusic(item,issearch){
 				this.innerAudioContext.stop()
 				this.innerAudioContext.src = item["src"]
+				if(item["imgsrc"]){
+					this.src = item["imgsrc"]
+				}
+				else{
+					this.src = "../../static/music_img.jpg"
+				}
+				if(issearch){
+					this.musiclist.unshift(item)
+				}
 				this.currentmusic = item["musicname"]
 				this.innerAudioContext.play()
 				this.displaylist=false
 				this.isplaying=true
+				uni.setStorageSync("musiclist",this.musiclist)
 			},
 			playorstop(){
 				var that = this
@@ -124,7 +248,93 @@
 </script>
 
 <style>
-	 
+	@keyframes xuanzhuan{
+		0%{ transform: rotate(0deg);}
+		100%{ transform: rotate(360deg);}
+	}
+	.inloading{
+		flex:1;
+		margin-bottom: 21vh;
+		text-align: center;
+		width: 100%;
+		height: 70rpx;
+		animation: spin 2s linear infinite;
+	}
+	.searchlist{
+		position: absolute;
+		top: 100rpx;
+		width: 100%;
+		height: 1098rpx;
+	}
+	.cancle{
+		position: absolute;
+		top: 25rpx;
+		left: 610rpx;
+		width: 125rpx;
+		  height: 56rpx;
+		  overflow: visible;
+		  background-color: rgba(255, 255, 255, 0.76);
+		  border-radius: 78rpx;
+	}
+	.searchcontent{
+		width: 440rpx;
+		 height: 38rpx;
+		 overflow: visible;
+		 font-family: "Inter", sans-serif;
+		 color: #000000;
+		 font-size: 16px;
+		 position: absolute;
+		top: 29rpx;
+		left: 120rpx;
+		line-height: 64rpx;
+		font-size: 32rpx;
+		color: rgba(0,0,0,0.8);
+	}
+	.searchbt-ing{
+		width: 64rpx;
+		height: 64rpx;
+		position: absolute;
+		top: 20rpx;
+		bottom: 20rpx;
+		right: 26rpx;
+		left: 30rpx;
+		line-height: 64rpx;
+		font-size: 50rpx;
+		color: rgba(0,0,0,0.3);
+	}
+	.searchbt{
+		width: 64rpx;
+		height: 64rpx;
+		position: absolute;
+		top: 20rpx;
+		bottom: 20rpx;
+		right: 30rpx;
+		left: 660rpx;
+		line-height: 64rpx;
+		font-size: 50rpx;
+		color: rgba(0,0,0,0.3);
+	}
+	.bartitle{
+		  position: absolute;
+		  top:12rpx;
+		  bottom: 14rpx;
+		  left: 306rpx;
+		  right: 296rpx;
+		  width: 148rpx;
+		  height: 70rpx;
+		  overflow: visible;
+		  font-family: "undefined", serif;
+		  color: #ffffff;
+		  font-size: 58rpx;
+		  letter-spacing: NaNpx;
+		  line-height: 1.2;
+	}
+	.searchbar{
+		width: 100%;
+		height: 100rpx;
+		background-color: #f01919;
+
+	} 
 	@keyframes spin {
 		0% {
 			transform: rotate(0deg);
@@ -156,8 +366,9 @@
 		border-radius: 418rpx;
 	}
 	.mask{
+		  position: fixed;
 		  width: 750rpx;
-		  height: 643rpx;
+		  height: 50vh;
 		  background-color: rgba(0, 153, 255, 0);
 	}
 	.delete{
@@ -214,8 +425,9 @@
 		overflow: hidden;
 		position: absolute;
 		top:650rpx;
+		bottom: 0rpx;
 		width: 100%;
-	    height: 685rpx;
+	    height: 50vh;
 	    background-color: white;
 	    border-radius: 36rpx;
 	    border: 6rpx solid #222;

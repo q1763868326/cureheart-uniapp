@@ -1,6 +1,6 @@
 {
-    "name" : "Cure-H",
-    "appid" : "__UNI__2AADF8D",
+    "name":"Cure-H",
+    "appid":"__UNI__2AADF8D",
     "description" : "",
     "versionName" : "1.0.0",
     "versionCode" : "100",
@@ -76,10 +76,25 @@
         "enable" : false
     },
     "h5" : {
+       "devServer": {
+               "port": 8080,
+               "disableHostCheck": true,
+               "proxy" : {
+                   "/api" : {
+                       "target" : "https://c.y.qq.com",  // 需要跨域的域名
+                       "changeOrigin" : true,
+                       "secure" : false,
+                       "pathRewrite" : {
+                           "^/api" : ""
+                       }
+                   }
+               }
+           },
         "router" : {
             "mode" : "hash",
             "base" : "./"
         },
-        "domain" : "http://116.62.47.156/static/"
+        "domain" : "http://116.62.47.156/static/",
+        "title" : "Cure-H"
     }
 }
