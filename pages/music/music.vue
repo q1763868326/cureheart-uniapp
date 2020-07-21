@@ -47,10 +47,10 @@
 					<text>播放列表</text>
 				</view>
 				<view  class="scrolllist" >
-					<view class="musicitem" v-for="(item,index) in musiclist" :key="index" @tap="playmusic(item,false)" >
-						<text class="cuIcon-sound" style="color:#e40c0c; font-size: 34rpx; margin-left: 10rpx;margin-right: 10rpx;"></text>
-						<text class="item_name">{{item["musicname"]}}</text>
-						<text class="cuIcon-close delete"></text>
+					<view class="musicitem" v-for="(item,index) in musiclist" :key="index"  >
+						<text @tap="playmusic(item,false)" class="cuIcon-sound" style="color:#e40c0c; font-size: 34rpx; margin-left: 10rpx;margin-right: 10rpx;"></text>
+						<text @tap="playmusic(item,false)" class="item_name">{{item["musicname"]}}</text>
+						<text @tap="deleteitem(item)" class="cuIcon-close delete"></text>
 					</view>
 				</view>
 
@@ -87,6 +87,7 @@
 <script>
 	import uniTransition from "@/components/uni-transition/uni-transition.vue"
 	export default {
+		name:'music',
 		components:{uniTransition},
 		data() {
 			return {
@@ -116,7 +117,8 @@
 					'background-color': 'white',
 					'border-radius': '36rpx',
 					'border': '6rpx solid #222'
-				}
+				},
+				timer_update:null
 			}
 		},
 		onLoad() {
@@ -140,17 +142,22 @@
 			this.innerAudioContext = uni.createInnerAudioContext();
 			this.innerAudioContext.autoplay = false;
 			this.innerAudioContext.src = this.currentmusic;
-			this.innerAudioContext.volume = 0.8
+			this.innerAudioContext.volume = 1 
 			var that = this;
 			this.innerAudioContext.onEnded(function(){
 				let item = that.musiclist[Math.floor(Math.random()*(that.musiclist.length))]
 				that.innerAudioContext.src = item["src"]
 				that.currentmusic = item["musicname"]
-				that.innerAudioContext.play()
+				that.playmusic(item,false,false)
 			})
 			
 		},
 		methods: {
+			deleteitem(item){
+				var index = this.musiclist.indexOf(item)
+				var delete_item = this.musiclist.splice(index,1)
+				uni.setStorageSync("musiclist",this.musiclist)
+			},
 			startdownload(url){
 				console.log(url)
 				window.location=url
@@ -191,20 +198,132 @@
 					}
 				})
 			},
-			playmusic(item,issearch){
-				this.innerAudioContext.stop()
-				this.innerAudioContext.src = item["src"]
+			async playmusic(item,issearch,isupdate=false){
+				
+				// item["src"]="http://116.62.47.156/static"
+				// item["songmid"]=""
 				if(item["imgsrc"]){
 					this.src = item["imgsrc"]
 				}
 				else{
 					this.src = "../../static/music_img.jpg"
 				}
+				this.innerAudioContext.src = item["src"]
+				this.currentmusic = item["musicname"]
+				await new Promise((resolve,reject)=>{
+					this.innerAudioContext.stop()
+					this.innerAudioContext.play()
+					console.log(this.innerAudioContext.src)
+					resolve("start play")
+				}) 
 				if(issearch){
+					console.log(this.musiclist)
+					var existindex=this.musiclist.findIndex((listitem)=>listitem["songmid"]===item["songmid"])
+					console.log(existindex)
+					if(existindex>-1){
+						this.musiclist.splice(existindex,1)
+					}
 					this.musiclist.unshift(item)
 				}
-				this.currentmusic = item["musicname"]
-				this.innerAudioContext.play()
+				else{
+					if(!isupdate){
+						this.timer_update=setTimeout(()=>{
+							if(this.innerAudioContext.currentTime==0)
+								this.playmusic(item,false,true)
+							else
+								clearTimeout(this.timer_update)
+						},3000)
+					}	
+					// console.log(this.innerAudioContext.duration<0.5)
+					// #ifdef APP-PLUS||H5
+						if(isupdate){
+							console.log("app music src update")
+							var updateindex=this.musiclist.indexOf(item)
+							await new Promise((resolve, reject) => {
+								uni.request({
+								method:"POST",
+								url:"http://116.62.47.156/getdownload/",
+								data:{
+									"songmid":item["songmid"],
+									"strMediaMid":item["strMediaMid"],
+									"type":item["type"]
+								},
+								success: (res) => {
+									if(res.data["data"][0]["downloadurl"]){
+										item["src"] = res.data["data"][0]["downloadurl"]
+										this.musiclist[updateindex]["src"] =  res.data["data"][0]["downloadurl"]
+										console.log(item["src"])
+										this.innerAudioContext.src = item["src"]
+										this.currentmusic = item["musicname"]
+										this.innerAudioContext.play()
+									}
+									else{
+										console.log("can not to update")
+									}
+									uni.setStorageSync("musiclist",this.musiclist)
+									resolve("ok")
+								},
+								complete: () => {
+									console.log("update ok 0")
+								},
+								fail: () => {
+									clearTimeout(this.timer_update)
+								}
+							})
+							})
+							console.log("update ok")
+						}
+						
+					// #endif
+				// 	// #ifdef H5
+				// 	    var canplay = false
+				// 	    uni.request({
+				// 	    	url:this.innerAudioContext.src,
+				// 	    	method:"GET",
+				// 	    	success: (res) => {
+				// 	    		canplay = true
+				// 	    		console.log(res.data)
+				// 	    	},
+				// 	    	fail: () => {
+				// 	    		canplay = false
+				// 	    	},
+				// 	    	complete: () => {
+				// 	    		if(!canplay){
+				// 	    			console.log(canplay)
+				// 	    			var updateindex=this.musiclist.indexOf(item)
+				// 	    			uni.request({
+				// 	    				method:"POST",
+				// 	    				url:"http://116.62.47.156/getdownload/",
+				// 	    				data:{
+				// 	    					"songmid":item["songmid"],
+				// 	    					"strMediaMid":item["strMediaMid"],
+				// 	    					"type":item["type"]
+				// 	    				},
+				// 	    				success: (res) => {
+				// 	    					if(res.data["data"][0]["downloadurl"]){
+				// 	    						item["src"] = res.data["data"][0]["downloadurl"]
+				// 	    						this.musiclist[updateindex]["src"] =  res.data["data"][0]["downloadurl"]
+				// 	    						console.log(item["src"])
+				// 	    						this.innerAudioContext.src = item["src"]
+				// 	    						this.currentmusic = item["musicname"]
+				// 	    						this.innerAudioContext.play()
+				// 	    					}
+				// 	    					else{
+				// 	    						console.log("can not to update")
+				// 	    					}
+				// 	    				}
+				// 	    			})
+				// 	    		}
+				// 	    		uni.setStorageSync("musiclist",this.musiclist)
+				// 	    	}
+				// 	    })
+					    
+				// 	// #endif
+				
+					
+				}
+				
+				
 				this.displaylist=false
 				this.isplaying=true
 				uni.setStorageSync("musiclist",this.musiclist)
@@ -219,6 +338,10 @@
 				this.isplaying=!this.isplaying
 				if(this.isplaying){
 				    this.innerAudioContext.play()
+					setTimeout(()=>{
+						if(this.innerAudioContext.currentTime==0)
+							this.playmusic(item,false,true)
+					},2000)
 					this.playanimation()
 					this.timer = setInterval(function(){
 						that.playanimation()

@@ -2,7 +2,7 @@
 	<view style="background: url(../../static/loginbg.jpg); background-repeat: no-repeat;background-size: 100% 100%; height: 100vh; width: 100vh;">
 		<text class="title">Login</text>
 		<input class="input1" placeholder="Email Address" placeholder-class="placeholder" v-model="emailaddress" confirm-type="next"/>
-		<input class="input2" placeholder="Password" placeholder-class="placeholder" password="true" v-model="password" @confirm="login"/>
+		<input class="input2" placeholder="Password" placeholder-class="placeholder"  password="true" v-model="password" @confirm="login"/>
 		<button class="loginbt cu-btn shadow" @tap="login">Login</button>
 		<button class="registerbt cu-btn shadow" @tap="regist">Register</button>
 		<uni-popup ref="tips" type="message">

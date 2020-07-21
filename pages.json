@@ -34,6 +34,27 @@
             "path" : "pages/music/music",
             "style" : {}
         }
+        ,{
+            "path" : "pages/login_scan/login_scan",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/qrlogin/qrlogin",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/qiming/qiming",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/renlianshibie/renlianshibie",
+            "style" : {}
+        }
+        
+        ,{
+            "path" : "pages/startshibie/startshibie",
+            "style" : {}
+        }
     ],
 	"globalStyle": {
 	"mp-alipay": {

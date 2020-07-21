@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<web-view src="http://116.62.47.156/static/live2d/" :webview-styles="webviewStyles" style="height: 75vh;"></web-view>
+		<web-view src="http://116.62.47.156/static/cov/model.html"></web-view>
 	</view>
 </template>
 
@@ -14,6 +14,9 @@
 				                    }
 				                }
 			}
+		},
+		onShow() {
+			
 		},
 		methods: {
 			

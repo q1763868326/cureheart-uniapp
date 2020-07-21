@@ -1,0 +1,109 @@
+<template>
+	<view>
+		<view style="display: flex;flex-direction: column;height:1500rpx;width: 100%;">
+			<image :src="snapshotpicture" mode="aspectFit" style="width: 100%;height: 750rpx;"></image>
+			<button @tap="captureImage" style="margin-top: 150rpx;">{{tip1}}</button>
+			<button @tap="upload" style="margin-top: 60rpx;">{{tip2}}</button>
+			<text style="width: 100%;text-align: center; margin-top: 40rpx;" v-if="tip2=='正在上传...'">一般上传时间为1s-5s，请稍等</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	
+	export default {
+	        data(){
+				return{
+				tip1:"录入人脸",
+				tip2:"本地上传",
+				snapshotpicture:"../../static/logo.png"
+	        }
+			},
+			onLoad() {
+
+			},
+			methods:{
+				onReady(){
+					document.addEventListener( "plusready", onPlusReady, false );	
+				},
+				onPlusReady() {
+					console.log("plusready");
+				},
+				captureImage(){
+					var cmr = plus.camera.getCamera();
+					console.log(cmr.supportedImageResolutions)
+					console.log(cmr.supportedImageFormats)
+					var res = cmr.supportedImageResolutions[7];
+					var fmt = cmr.supportedImageFormats[0];
+					console.log("Resolution: "+res+", Format: "+fmt);
+					cmr.captureImage( path=>{
+							console.log( "Capture image success: " + path );  
+							this.upload2(path)
+							
+							this.tip1="重新录入"
+						},
+						function( error ) {
+							console.log( "Capture image failed: " + error.message );
+						},
+						{resolution:res,format:fmt}
+					);
+				},
+				upload(){
+					uni.chooseImage({
+					    success: (chooseImageRes) => {
+					        const tempFilePaths = chooseImageRes.tempFilePaths;
+							this.snapshotpicture = tempFilePaths[0]
+							console.log(tempFilePaths[0])
+					        uni.uploadFile({
+					            url: 'http://116.62.47.156/uploadlocal/', //仅为示例，非真实的接口地址
+					            filePath: tempFilePaths[0],
+					            name: 'img',
+					            
+					            success: (uploadFileRes) => {
+					                console.log(JSON.parse(uploadFileRes.data).url);
+									this.tip2="上传成功,本地上传"
+					            },
+								fail:e=>{
+									console.log(e)
+									this.tip2="上传失败,本地上传"
+								},
+								complete: () => {
+								
+								}
+					        });
+							this.tip2="正在上传..."
+					    }
+					});
+					
+				},
+				upload2(tempFilePath){
+							this.snapshotpicture = tempFilePath
+							console.log(tempFilePath)
+					        uni.uploadFile({
+					            url: 'http://116.62.47.156/uploadlocal/', //仅为示例，非真实的接口地址
+					            filePath: tempFilePath,
+					            name: 'img',
+					            
+					            success: (uploadFileRes) => {
+					                console.log(JSON.parse(uploadFileRes.data).url)
+									this.tip2="上传成功,本地上传"
+					            },
+								fail:e=>{
+									console.log(e)
+									this.tip2="上传失败,本地上传"
+								},
+								complete: () => {
+								
+								}
+					        });
+							this.tip2="正在上传..."
+				},
+				
+				
+			}
+	    }
+</script>
+
+<style>
+
+</style>

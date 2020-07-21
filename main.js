@@ -9,9 +9,15 @@ Vue.component("pet",pet)
 import friends from './pages/friends/friends.vue'
 Vue.component("friends",friends)
 
+import music from './pages/music/music.vue'
+Vue.component("music",music)
+
 import md5 from 'js-md5';
 Vue.prototype.$md5 = md5;
 import animate from 'animate.css';
+
+// import VueSocketIO from 'vue-socket.io'
+// Vue.use(VueSocketIO, 'http://116.62.47.156:8000');
 
 Vue.config.productionTip = false
 
